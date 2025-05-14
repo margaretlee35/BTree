@@ -16,7 +16,7 @@
 #endif // MSC_VER
 #endif // FC_USE_SIMD
 
-#include "fc/details.h"
+#include "BTree/include/fc/details.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -941,16 +941,21 @@ protected:
 
   const_iterator_type search(const K &key) const {
     auto x = root_.get();
+    std::string str = "idx: ";
     while (x) {
       auto i = get_lb(key, x);
+      str = str + std::to_string(i) + ", ";
       if (i < x->nkeys() && key == Proj{}(x->keys_[i])) { // equal? key found
+        std::cout << str << std::endl;
         return const_iterator_type(x, static_cast<attr_t>(i));
       } else if (x->is_leaf()) { // no child, key is not in the tree
+        std::cout << str << std::endl;
         return cend();
       } else { // search on child between range
         x = x->children_[i].get();
       }
     }
+    std::cout << str << std::endl;
     return cend();
   }
 
@@ -1029,6 +1034,7 @@ protected:
     Node *x = y->parent_;
     assert(x && y == x->children_[i].get() && y->is_full() && !x->is_full());
 
+    //std::cout << "split!" << std::endl;
     // split y's 2 * t keys
     // y will have left t - 1 keys
     // y->keys_[t - 1] will be a key of y->parent_
@@ -1098,6 +1104,7 @@ protected:
     auto sibling = x->children_[i + 1].get();
     assert(y->nkeys() + sibling->nkeys() <= 2 * Fanout - 2);
 
+    //std::cout << "merge!" << std::endl;
     auto immigrated_size = sibling->nkeys();
 
     if constexpr (is_disk_) {
